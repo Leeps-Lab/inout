@@ -5,12 +5,12 @@
 <dom-module id="payout-graph">
 
     <template>
-        <style> 
+        <style>
             #graph {
-                padding-left: 25%;
+                /*padding-left: 25%;*/
             }
         </style>
-    
+
             <div id="graph"></div>
     </template>
 
@@ -27,17 +27,19 @@
                 initialValue:{
                     type: Number,
                 },
+                graphLength:{
+                    type: Number,
+                },
                 _index: {
                     type: Number,
                     value: 0
-
                 }
             },
             ready() {
                 console.log("Graph loaded");
                 // Async inits chart at end of event queue.
                 this.async(this._initChart.bind(this), 1);
-                
+
             },
             _initChart() {
                 console.log("initializing graph");
@@ -59,23 +61,23 @@
                     chart: {
                         animation: false,
                         renderTo: this.$.graph,
-                        width: 500, 
+                        width: 1000,
                         height: 500
                     },
-                    title: { 
+                    title: {
                         text: "",
 
                     },
                     xAxis: {
                         min: 0,
-                        max: 80, // Period length
+                        max: (this.graphLength * 1.25), // Period length
                         title: {
                             text: 'Period'
                         },
                     },
                     yAxis: {
                         min: 0,
-                        max: 300, 
+                        max: 300,
                         title: {
                             text: 'Value'
                         },
@@ -105,7 +107,7 @@
 
                 });
 
-                
+
             },
             addPersonalData(dataArr) {
                 this.graph_obj.series[0].addPoint(dataArr);

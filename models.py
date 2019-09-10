@@ -50,12 +50,15 @@ class Subsession(BaseSubsession):
 
 class Group(DecisionGroup):
     interval = models.IntegerField(initial=0)
-    x_t = models.IntegerField(initial=0) 
+    x_t = models.IntegerField(initial=0)
 
     # Getters for config values
     def period_length(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["period_length"]
-    
+
+    def graph_length(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["period_length"]
+
     def tick_length(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["tick_length"]
 
@@ -63,19 +66,19 @@ class Group(DecisionGroup):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["game_constant"]
 
     def a_sto(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["a_sto"]        
-    
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["a_sto"]
+
     def b_sto(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]        
-    
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]
+
     def s_sto(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["s_sto"]        
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["s_sto"]
 
     def x_0(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]
-    
+
     def treatment(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["treatment"]        
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["treatment"]
 
     def num_rounds(self):
         return len(parse_config(self.session.config['config_file']))
@@ -108,10 +111,14 @@ class Group(DecisionGroup):
 
         for player in self.get_players():
             playerCode = player.participant.code
+            p_code = self.group_decisions[playerCode]
+            if p_code is 1 or p_code is 0:
+                p_code = [p_code, self.game_constant()]
             # print("player code: " + playerCode)
-            if self.group_decisions[playerCode] is 1:
+            #print(p_code)
+            if p_code[0] is 1:
                 # player is in, send stochastic value
-                player.update_payoff(self.x_t)
+                player.update_payoff(self.x_t, p_code[1])
                 msg[playerCode] = {
                     'interval': current_interval * self.tick_length(),
                     'value': self.x_t,
@@ -119,9 +126,9 @@ class Group(DecisionGroup):
                     'x_t': self.x_t,
                     'decision': 1
                 }
-            elif self.group_decisions[playerCode] is 0:
+            elif p_code[0] is 0:
                 # player is out, send constant C
-                player.update_payoff(self.game_constant())
+                player.update_payoff(self.game_constant(), -1)
                 msg[playerCode] = {
                     'interval': current_interval * self.tick_length(),
                     'value': self.game_constant(),
@@ -135,7 +142,7 @@ class Group(DecisionGroup):
         # Send message across channel
         self.send('tick', msg)
 
-        
+
 
     # Random value generator using formula in spec
     def generate_x_t(self):
@@ -147,10 +154,10 @@ class Group(DecisionGroup):
             # Always save so database updates user values
             self.save()
             return self.x_t
-        
+
         # Not first tick so follow forula specification
         self.x_t = ( (self.a_sto() * self.x_t) + self.generate_noise())
-        
+
         # b offset value
         self.x_t += self.b_sto()
 
@@ -158,13 +165,13 @@ class Group(DecisionGroup):
         self.x_t = round(self.x_t, 2)
 
         # Always save so database updates user values
-        self.save()     
+        self.save()
         return self.x_t
 
     # Noise generation
     def generate_noise(self):
         # Genrate number on normal distribution using Numpy
-        # Mean: 0 
+        # Mean: 0
         # Std. D: 1
         e_t = np.random.normal(0,1)
 
@@ -182,14 +189,33 @@ class Player(BasePlayer):
     payoff = models.CurrencyField(initial=0)
 
     # Update both payoff values
-    def update_payoff(self, pay):
-        self.payoff = self.payoff + pay
-        self.payoff = round(self.payoff, 2)
-        self.cumulative_pay = self.cumulative_pay + pay
-        self.cumulative_pay = math.floor(self.cumulative_pay)
-        
-        # Always save so database updates user values
-        self.save()
+    # def update_payoff(self, pay):
+    #     self.payoff = self.payoff + pay
+    #     self.payoff = round(self.payoff, 2)
+    #     self.cumulative_pay = self.cumulative_pay + pay
+    #     self.cumulative_pay = math.floor(self.cumulative_pay)
+    #
+    #     # Always save so database updates user values
+    #     self.save()
+
+    def update_payoff(self, pay, forecast):
+        # print(forecast)
+        if forecast > 0:
+            error = abs(pay - forecast)
+            self.payoff = self.payoff + pay - error
+            self.payoff = round(self.payoff, 2)
+            self.cumulative_pay = self.cumulative_pay + pay - error
+            self.cumulative_pay = math.floor(self.cumulative_pay)
+            # Always save so database updates user values
+            self.save()
+        else:
+            self.payoff = self.payoff + pay
+            self.payoff = round(self.payoff, 2)
+            self.cumulative_pay = self.cumulative_pay + pay
+            self.cumulative_pay = math.floor(self.cumulative_pay)
+            # Always save so database updates user values
+            self.save()
+
 
     # Getter for payoff
     # Note: returniong cumulative payoff since payoff is of type

@@ -22,31 +22,45 @@
             }
             #text {
                 text-align: center;
+                display: inline-block;
+                width: 90%;
+            }
+            #slider-container {
+                display: inline-block;
+                width: 50px;
+                height: 500px;
+                position: relative;
             }
             #graph {
                 width: 100%;
+                text-align: center;
             }
             #buttons {
                 text-align: center;
             }
-            .unhiglighted {
-                border: 1px solid #000000;
-                background: #ffffff;
-
+            #slider {
+                position: absolute;
+                -webkit-appearance: slider-vertical;
+                height: 82%;
             }
             .unhiglighted {
                 border: 1px solid #000000;
                 background: #ffffff;
 
             }
-           
+            .unhiglighted {
+                border: 1px solid #000000;
+                background: #ffffff;
+
+            }
+
         </style>
 
         <redwood-period>
         </redwood-period>
         <redwood-decision
             initial-decision="1"
-            my-decision="{{ isIn }}">
+            my-decision="{{myDecisions}}">
         </redwood-decision>
         <redwood-channel
             channel="tick"
@@ -60,11 +74,26 @@
         <div id="text">
             Your current pay off is {{ _currentPayoff }}; cumlative is {{ _cumulativePayoff }}
         </div>
+        <div id="text">
+            Your current forecast is {{ myForecast }}
+        </div>
         <br>
         <div id="graph">
             <payout-graph id="text"
-                game-Constant='[[ c ]]'>
+                game-Constant='[[ c ]]'
+                graph-length='[[ graphLength ]]'
+                >
             </payout-graph>
+            <div id="slider-container">
+                <input
+                    id="slider"
+                    type="range"
+                    min='0'
+                    max='300'
+                    value='{{c}}'
+                    step="0.01"
+                    on-change="_sliderValueChanged">
+            </div>
         </div>
         <br>
         <div id="buttons">
@@ -77,8 +106,8 @@
                 {{ _buttonText }}
             </button>
         </div>
-    </template>   
-    
+    </template>
+
     <script>
         Polymer({
             is: 'in-out',
@@ -97,9 +126,20 @@
                     type: Boolean,
                     value: true
                 },
+                myForecast: {
+                    type: Number,
+                    value: 0
+                },
+                myDecisions: {
+                    type: Object,
+                    computed: 'getMyDecisions(isIn, myForecast)',
+                },
                 _timeLeft: {
                     type: Number,
                     value: 60,
+                },
+                graphLength: {
+                    type: Number,
                 },
                 _inGroup:{
                     type: Number,
@@ -162,7 +202,7 @@
 
                 // Value for x_t graph dependant on treatment
                 ifOutValue = (this.treatment.toLowerCase() === "u") ? null : tick_msg.x_t;
-                
+
                 // Updating values on graph
                 if(tick_msg.decision === 0 & this._lastPosition === true){
                     // Remove slated line to Q value when switching from
@@ -181,8 +221,8 @@
                 } else {
                     this._lastPosition = true;
                 }
-                
-                
+
+
                 // Update user payoff value
                 this._updatePayoff(tick_msg.value);
 
@@ -206,7 +246,13 @@
             _X_tGraph(data){
                 // Send X_t data to graph
                 this.payoff_graph.addX_tData(data);
-            }
+            },
+            _sliderValueChanged(event) {
+                this.myForecast = parseFloat(event.target.value);
+            },
+            getMyDecisions: function(isIn, myForecast) {
+                return [this.isIn, this.myForecast];
+            },
 
         });
     </script>
