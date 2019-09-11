@@ -54,6 +54,12 @@
                         type: 'line',
                         name: "Stochastic Payout",
                         data: [],
+                    },
+                    {
+                        type: 'line',
+                        name: "Forecast",
+                        data: [],
+                        color: '#FF0000',
                     }
                 ];
 
@@ -93,6 +99,11 @@
                                     fontSize: 10,
                                 }
                             }
+                        },
+                        {
+                            color: "#000000",
+                            width: 0.5,
+                            value: this.gameConstant,
                         }]
                     },
                     credits: {
@@ -116,6 +127,13 @@
                 // Push stochastic value to its series
                 this.graph_obj.series[1].addPoint(dataArr);
             },
+            addForecastData(dataArr) {
+                this.graph_obj.series[2].addPoint(dataArr);
+            },
+            updateForecastLine(data) {
+              this.graph_obj.yAxis[0].plotLinesAndBands[1].options.value = data;
+              this.graph_obj.yAxis[0].update();
+            }
         });
     </script>
 </dom-module>

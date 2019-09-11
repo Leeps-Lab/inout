@@ -232,10 +232,16 @@
                 } else {
                     this._X_tGraph([tick_msg.interval, ifOutValue]);
                 }
+
+                // Update forecast graph
+                this._updateForecast([tick_msg.interval, this.myForecast]);
             },
             _updateGraph(data) {
                 //Send update value to payoff polymer graph
                 this.payoff_graph.addPersonalData(data);
+            },
+            _updateForecast(data) {
+                this.payoff_graph.addForecastData(data);
             },
             _updatePayoff(current){
                 // Update payoff display value after truncation
@@ -249,6 +255,7 @@
             },
             _sliderValueChanged(event) {
                 this.myForecast = parseFloat(event.target.value);
+                this.payoff_graph.updateForecastLine(event.target.value);
             },
             getMyDecisions: function(isIn, myForecast) {
                 return [this.isIn, this.myForecast];

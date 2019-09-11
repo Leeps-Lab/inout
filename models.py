@@ -32,6 +32,7 @@ def parse_config(config):
             'a_sto': float(row['a_sto']),
             'b_sto': float(row['b_sto']),
             's_sto': float(row['s_sto']),
+            'A_sto': float(row['A_sto']),
             'x_0': float(row['x_0']),
             'treatment': row['treatment']
         })
@@ -73,6 +74,9 @@ class Group(DecisionGroup):
 
     def s_sto(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["s_sto"]
+
+    def A_sto(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["A_sto"]
 
     def x_0(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]
@@ -121,7 +125,8 @@ class Group(DecisionGroup):
                 player.update_payoff(self.x_t, p_code[1])
                 msg[playerCode] = {
                     'interval': current_interval * self.tick_length(),
-                    'value': self.x_t,
+                    #'value': self.x_t,
+                    'value': player.get_error_pay(),
                     'payoff': player.get_payoff(),
                     'x_t': self.x_t,
                     'decision': 1
@@ -187,6 +192,8 @@ class Player(BasePlayer):
     cumulative_pay = models.IntegerField(initial=0)
     # oTree payoff (probably not needed just kept for redundancy)
     payoff = models.CurrencyField(initial=0)
+    # payoff with error
+    error_pay = models.IntegerField(initial=0)
 
     # Update both payoff values
     # def update_payoff(self, pay):
@@ -200,11 +207,14 @@ class Player(BasePlayer):
 
     def update_payoff(self, pay, forecast):
         # print(forecast)
-        if forecast > 0:
-            error = abs(pay - forecast)
-            self.payoff = self.payoff + pay - error
+        if forecast > -1:
+            error = abs(forecast - pay)
+            converted_pay = self.group.A_sto() * max(0, 1 - error/self.group.s_sto())
+            self.error_pay = converted_pay
+            self.error_pay = round(self.error_pay, 2)
+            self.payoff = self.payoff + converted_pay
             self.payoff = round(self.payoff, 2)
-            self.cumulative_pay = self.cumulative_pay + pay - error
+            self.cumulative_pay = self.cumulative_pay + converted_pay
             self.cumulative_pay = math.floor(self.cumulative_pay)
             # Always save so database updates user values
             self.save()
@@ -222,6 +232,9 @@ class Player(BasePlayer):
     #       Curreny(). Causes error with redwood messaging
     def get_payoff(self):
         return self.cumulative_pay
+
+    def get_error_pay(self):
+        return self.error_pay
 
     # Player starts in
     def initial_decision(self):
