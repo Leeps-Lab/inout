@@ -34,7 +34,9 @@ def parse_config(config):
             's_sto': float(row['s_sto']),
             'A_sto': float(row['A_sto']),
             'x_0': float(row['x_0']),
-            'treatment': row['treatment']
+            'treatment': row['treatment'],
+            'steps_ahead': int(row['steps_ahead']),
+            'show_button': True if row['show_button'] == 'TRUE' else False,
         })
     return configs
 
@@ -83,6 +85,12 @@ class Group(DecisionGroup):
 
     def treatment(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["treatment"]
+
+    def show_button(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["show_button"]
+
+    def steps_ahead(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["steps_ahead"]
 
     def num_rounds(self):
         return len(parse_config(self.session.config['config_file']))

@@ -17,8 +17,17 @@
     <in-out
         c='{{ gameConstant }}'
         my-forecast='{{ gameConstant }}'
+        my-curr-forecast='{{ gameConstant }}'
         treatment='{{ treatment }}'
         graph-length='{{ player.group.graph_length }}'
+        steps-ahead='{{ player.group.steps_ahead }}'
+        interval='{{ player.group.tick_length }}'
+        {% if player.group.show_button %}
+            show-button
+            graph-line='-1'
+        {% else %}
+            graph-line='{{ gameConstant }}'
+        {% endif %}
         >
     </in-out>
 

@@ -6,6 +6,9 @@
     href="/static/webcomponents/inout/payout-graph.html" />
 <link
     rel="import"
+    href="/static/webcomponents/inout/payoff-graph.html" />
+<link
+    rel="import"
     href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
 <link
     rel="import"
@@ -35,13 +38,16 @@
                 width: 100%;
                 text-align: center;
             }
-            #buttons {
-                text-align: center;
-            }
             #slider {
                 position: absolute;
                 -webkit-appearance: slider-vertical;
                 height: 82%;
+            }
+            #payoff {
+                width: 50%;
+            }
+            #buttons {
+                text-align: center;
             }
             .unhiglighted {
                 border: 1px solid #000000;
@@ -67,20 +73,30 @@
             on-event="_tick">
         </redwood-channel>
 
-
-        <div id="text">
-            <span id="choice">{{ _inGroup }}/1</span> <span id="static_text"> in your group chose</span> <span id="choice"> P</span>
-        </div>
-        <div id="text">
+        <template is="dom-if" if="[[ showButton ]]">
+            <div id="text">
+                <span id="choice">{{ _inGroup }}/1</span> <span id="static_text"> in your group chose</span> <span id="choice"> P</span>
+            </div>
+        </template>
+        <!-- <div id="text">
             Your current pay off is {{ _currentPayoff }}; cumlative is {{ _cumulativePayoff }}
-        </div>
+        </div> -->
         <div id="text">
-            Your current forecast is {{ myForecast }}
+            Your current forecast is {{ myCurrForecast }}
         </div>
         <br>
+        <!-- <div id="payoff">
+            <payoff-graph
+                max-payoff="300"
+                min-payoff="0"
+                duration="graphLength"
+                myPayoff="_currentPayoff"
+                >
+            </payoff-graph>
+        </div> -->
         <div id="graph">
             <payout-graph id="text"
-                game-Constant='[[ c ]]'
+                game-Constant='[[ graphLine ]]'
                 graph-length='[[ graphLength ]]'
                 >
             </payout-graph>
@@ -96,16 +112,18 @@
             </div>
         </div>
         <br>
-        <div id="buttons">
-            <button
-                id="in_button"
-                type="button"
-                value=1
-                on-tap="_changeStatus"
-                class="unhiglighted">
-                {{ _buttonText }}
-            </button>
-        </div>
+        <template is="dom-if" if="[[ showButton ]]">
+            <div id="buttons">
+                <button
+                    id="in_button"
+                    type="button"
+                    value=1
+                    on-tap="_changeStatus"
+                    class="unhiglighted">
+                    {{ _buttonText }}
+                </button>
+            </div>
+        </template>
     </template>
 
     <script>
@@ -128,11 +146,21 @@
                 },
                 myForecast: {
                     type: Number,
-                    value: 0
+                    value: 0,
+                },
+                myCurrForecast: {
+                    type: Number,
+                    value: 0,
                 },
                 myDecisions: {
                     type: Object,
                     computed: 'getMyDecisions(isIn, myForecast)',
+                },
+                showButton: {
+                    type: Boolean,
+                },
+                graphLine: {
+                    type: Number,
                 },
                 _timeLeft: {
                     type: Number,
@@ -164,11 +192,27 @@
                 _lastTick: {
                     type: Number,
                     value: 0,
-                }
+                },
+                forecastQueue: {
+                    type: Array,
+                    value: []
+                },
+                stepsAhead: {
+                    type: Number,
+                },
+                interval: {
+                    type: Number,
+                },
             },
             ready() {
                 console.log("in-out.html");
                 this.payoff_graph = this.$$('payout-graph');
+                if(!this.showButton) {
+                    this.graphLine = -1;
+                }
+                for(let i = 0; i < this.stepsAhead; i++) {
+                    this.forecastQueue.push(-1);
+                }
             },
             _changeStatus(e){
                 // Changes the player's status form in to out.
@@ -196,6 +240,8 @@
             },
             _tick(e) {
                 // actions to happen per tick
+                this.forecastQueue.push(this.myCurrForecast)
+                this.myForecast = this.forecastQueue.shift();
 
                 // Message from channel
                 let tick_msg = e.detail.payload[oTree.participantCode];
@@ -234,7 +280,7 @@
                 }
 
                 // Update forecast graph
-                this._updateForecast([tick_msg.interval, this.myForecast]);
+                this._updateForecast([(tick_msg.interval + this.interval * this.stepsAhead), this.myCurrForecast]);
             },
             _updateGraph(data) {
                 //Send update value to payoff polymer graph
@@ -254,7 +300,9 @@
                 this.payoff_graph.addX_tData(data);
             },
             _sliderValueChanged(event) {
-                this.myForecast = parseFloat(event.target.value);
+                this.myCurrForecast = parseFloat(event.target.value);
+                //this.myForecast = parseFloat(event.target.value);
+                this.forecastQueue.push(parseFloat(event.target.value));
                 this.payoff_graph.updateForecastLine(event.target.value);
             },
             getMyDecisions: function(isIn, myForecast) {

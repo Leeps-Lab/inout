@@ -30,6 +30,12 @@
                 graphLength:{
                     type: Number,
                 },
+                stepsAhead: {
+                    type: Number,
+                },
+                initSeries: {
+                    type: Object,
+                },
                 _index: {
                     type: Number,
                     value: 0
@@ -37,6 +43,11 @@
             },
             ready() {
                 console.log("Graph loaded");
+                // let initSer = [];
+                // for(let i = 0; i < this.stepsAhead; i++) {
+                //     initSer.push(null);
+                // }
+                //this.initSeries = initSer;
                 // Async inits chart at end of event queue.
                 this.async(this._initChart.bind(this), 1);
 
@@ -49,6 +60,8 @@
                         color: '#00FF00',
                         name: "Value (me)",
                         data: [],
+                        marker: {enabled: false},
+                        showInLegend: false
                     },
                     {
                         type: 'line',
@@ -58,8 +71,9 @@
                     {
                         type: 'line',
                         name: "Forecast",
-                        data: [],
+                        data: this.initSeries,
                         color: '#FF0000',
+                        marker: {symbol: "diamond"}
                     }
                 ];
 
@@ -131,8 +145,8 @@
                 this.graph_obj.series[2].addPoint(dataArr);
             },
             updateForecastLine(data) {
-              this.graph_obj.yAxis[0].plotLinesAndBands[1].options.value = data;
-              this.graph_obj.yAxis[0].update();
+                this.graph_obj.yAxis[0].plotLinesAndBands[1].options.value = data;
+                this.graph_obj.yAxis[0].update();
             }
         });
     </script>
