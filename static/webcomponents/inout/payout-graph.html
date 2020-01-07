@@ -126,8 +126,18 @@
                     tooltip: {
                         enabled: false
                     },
-
-
+                    // plotOptions setting 'hover' state to false disables entire graph display
+                    // plotOptions setting 'enableMouseTracking' series to false disables entire graph display
+                    // Removes the faded appearance of other lines when mouse hovers over a paticular line
+                    plotOptions: {
+                        series: {
+                            states: {
+                                inactive: {
+                                    opacity: 1,
+                                },
+                            },
+                        },
+                    },
                     series: series
 
                 });
