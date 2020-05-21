@@ -32,10 +32,13 @@ def parse_config(config):
             'a_sto': float(row['a_sto']),
             'b_sto': float(row['b_sto']),
             's_sto': float(row['s_sto']),
-            'A_sto': float(row['A_sto']),
+            'P_sto': float(row['P_sto']),
+            'R_sto': float(row['R_sto']),
+            'c_sto': float(row['c_sto']),
             'x_0': float(row['x_0']),
             'treatment': row['treatment'],
             'steps_ahead': int(row['steps_ahead']),
+            'group_play': True if row['group_play'] == 'TRUE' else False,
             'show_button': True if row['show_button'] == 'TRUE' else False,
         })
     return configs
@@ -53,7 +56,7 @@ class Subsession(BaseSubsession):
 
 class Group(DecisionGroup):
     interval = models.IntegerField(initial=0)
-    x_t = models.IntegerField(initial=0)
+    x_t = models.FloatField(initial=0)
 
     # Getters for config values
     def period_length(self):
@@ -61,6 +64,9 @@ class Group(DecisionGroup):
 
     def graph_length(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["period_length"]
+
+    def group_play(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["group_play"]
 
     def tick_length(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["tick_length"]
@@ -74,14 +80,20 @@ class Group(DecisionGroup):
     def b_sto(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]
 
+    def c_sto(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["c_sto"]
+
     def s_sto(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["s_sto"]
 
-    def A_sto(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["A_sto"]
-
     def x_0(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["b_sto"]
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["x_0"]
+
+    def P_sto(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["P_sto"]
+
+    def R_sto(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["R_sto"]
 
     def treatment(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["treatment"]
@@ -169,13 +181,16 @@ class Group(DecisionGroup):
             return self.x_t
 
         # Not first tick so follow forula specification
-        self.x_t = ( (self.a_sto() * self.x_t) + self.generate_noise())
+        if not self.group_play():
+            self.x_t = ( (self.a_sto() * self.x_t) + self.generate_noise())
 
-        # b offset value
-        self.x_t += self.b_sto()
+            # b offset value
+            self.x_t += self.b_sto()
+        else:
+            self.x_t = (self.c_sto() + self.a_sto() * (self.forecast_ave() - self.c_sto()) + self.s_sto() * self.generate_noise())
 
         # round to .2f
-        self.x_t = round(self.x_t, 2)
+        # self.x_t = round(self.x_t, 2)
 
         # Always save so database updates user values
         self.save()
@@ -191,17 +206,29 @@ class Group(DecisionGroup):
         # Multiply by s value (Determined by config)
         return (self.s_sto() * e_t)
 
+    def forecast_ave(self):
+        self.refresh_from_db()
 
+        total = 0
+
+        for player in self.get_players():
+            playerCode = player.participant.code
+            p_code = self.group_decisions[playerCode]
+            if p_code == 1 or p_code == 0:
+                total += self.game_constant()
+            else:
+                total += p_code[1]
+
+        return total/len(self.get_players())
 
 
 
 class Player(BasePlayer):
     # total payoff
-    cumulative_pay = models.IntegerField(initial=0)
+    cumulative_pay = models.FloatField(initial=0)
     # oTree payoff (probably not needed just kept for redundancy)
-    payoff = models.CurrencyField(initial=0)
     # payoff with error
-    error_pay = models.IntegerField(initial=0)
+    error_pay = models.FloatField(initial=0)
 
     # Update both payoff values
     # def update_payoff(self, pay):
@@ -215,9 +242,14 @@ class Player(BasePlayer):
 
     def update_payoff(self, pay, forecast):
         # print(forecast)
+        if not pay:
+            return
         if forecast > -1:
             error = abs(forecast - pay)
-            converted_pay = self.group.A_sto() * max(0, 1 - error/self.group.s_sto())
+            if self.group.group_play():
+                converted_pay = max(0, self.group.P_sto() - self.group.R_sto() * (error ** 2))
+            else:
+                converted_pay = self.group.P_sto() * max(0, 1 - error/self.group.s_sto())
             self.error_pay = converted_pay
             self.error_pay = round(self.error_pay, 2)
             self.payoff = self.payoff + converted_pay
