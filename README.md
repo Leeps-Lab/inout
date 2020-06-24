@@ -3,9 +3,9 @@
 ```
 {
     'name': 'inout',
-    'display_name': 'In Out',
-    'num_demo_participants': 1,
-    'app_sequence': ['inout', 'payment_info'],
-    'config_file': 'test.csv',
+    'display_name': "In out",
+    'num_demo_participants': 6,
+    'app_sequence': ['inout'],
+    'config_file': 'test.csv'
 }
 ```
