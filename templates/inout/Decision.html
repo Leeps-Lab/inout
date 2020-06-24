@@ -13,11 +13,12 @@
 {% block content %}
     {% comment %} INOUT polymer {% endcomment %}
     <in-out
-        c='{{ gameConstant }}'
-        my-forecast='{{ gameConstant }}'
+        c='{{ player.group.c_sto }}'
+        my-forecast='{{ player.group.c_sto }}'
         my-curr-forecast='{{ gameConstant }}'
         treatment='{{ treatment }}'
         graph-length='{{ player.group.graph_length }}'
+        period-length='{{ player.group.period_length }}'
         steps-ahead='{{ player.group.steps_ahead }}'
         interval='{{ player.group.tick_length }}'
         {% if player.group.show_button %}

@@ -58,8 +58,9 @@ export class InOut extends PolymerElement {
 			<redwood-period>
 			</redwood-period>
 			<redwood-decision
-				initial-decision="1"
-				my-decision="{{myDecisions}}">
+				initial-decision="{{ c }}"
+				my-decision="{{ myForecast }}"
+				group-decisions="{{ groupDecisions }}">
 			</redwood-decision>
 			<redwood-channel
 				channel="tick"
@@ -74,9 +75,6 @@ export class InOut extends PolymerElement {
 			<!-- <div id="text">
 				Your current pay off is {{ _currentPayoff }}; cumlative is {{ _cumulativePayoff }}
 			</div> -->
-			<div id="text">
-				Your current forecast is {{ myCurrForecast }}
-			</div>
 			<br>
 			<!--<div id="payoff">
 				<payoff-graph
@@ -146,7 +144,11 @@ export class InOut extends PolymerElement {
 			},
 			myDecisions: {
 				type: Object,
+				value: [1, self.c],
 				computed: 'getMyDecisions(isIn, myForecast)',
+			},
+			groupDecisions: {
+				type: Object,
 			},
 			showButton: {
 				type: Boolean,

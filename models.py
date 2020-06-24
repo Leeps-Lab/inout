@@ -111,6 +111,8 @@ class Group(DecisionGroup):
     def when_all_players_ready(self):
         super().when_all_players_ready()
 
+        print("when")
+
         # Needed for first tick logic
         self.x_t = None
 
@@ -129,6 +131,7 @@ class Group(DecisionGroup):
 
         # For a randomly generated initial uncommment the generate below and the comment the other generate
         self.generate_x_t()
+        print("tick")
 
         # Message to channel, Include x_t value for treatment
         msg = {}
@@ -136,33 +139,42 @@ class Group(DecisionGroup):
         for player in self.get_players():
             playerCode = player.participant.code
             p_code = self.group_decisions[playerCode]
-            if p_code is 1 or p_code is 0:
-                p_code = [p_code, self.game_constant()]
-            # print("player code: " + playerCode)
-            #print(p_code)
-            if p_code[0] is 1:
-                # player is in, send stochastic value
-                player.update_payoff(self.x_t, p_code[1])
-                msg[playerCode] = {
-                    'interval': current_interval * self.tick_length(),
-                    #'value': self.x_t,
-                    'value': player.get_error_pay(),
-                    'payoff': player.get_payoff(),
-                    'x_t': self.x_t,
-                    'decision': 1
-                }
-            elif p_code[0] is 0:
-                # player is out, send constant C
-                player.update_payoff(self.game_constant(), -1)
-                msg[playerCode] = {
-                    'interval': current_interval * self.tick_length(),
-                    'value': self.game_constant(),
-                    'payoff': player.get_payoff(),
-                    'x_t': self.x_t,
-                    'decision': 0
-                }
-            else:
-                print("ERROR IN TICK PROCESSING!")
+            player.update_payoff(self.x_t, p_code)
+            msg[playerCode] = {
+                'interval': current_interval * self.tick_length(),
+                #'value': self.x_t,
+                'value': player.get_error_pay(),
+                'payoff': player.get_payoff(),
+                'x_t': self.x_t,
+                'decision': 1
+            }
+            # if p_code is 1 or p_code is 0:
+            #     p_code = [p_code, self.game_constant()]
+            # # print("player code: " + playerCode)
+            # # print(p_code)
+            # if p_code[0] is 1:
+            #     # player is in, send stochastic value
+            #     player.update_payoff(self.x_t, p_code[1])
+            #     msg[playerCode] = {
+            #         'interval': current_interval * self.tick_length(),
+            #         #'value': self.x_t,
+            #         'value': player.get_error_pay(),
+            #         'payoff': player.get_payoff(),
+            #         'x_t': self.x_t,
+            #         'decision': 1
+            #     }
+            # elif p_code[0] is 0:
+            #     # player is out, send constant C
+            #     player.update_payoff(self.game_constant(), -1)
+            #     msg[playerCode] = {
+            #         'interval': current_interval * self.tick_length(),
+            #         'value': self.game_constant(),
+            #         'payoff': player.get_payoff(),
+            #         'x_t': self.x_t,
+            #         'decision': 0
+            #     }
+            # else:
+            #     print("ERROR IN TICK PROCESSING!")
 
         # Send message across channel
         self.send('tick', msg)
@@ -174,14 +186,13 @@ class Group(DecisionGroup):
         # First tick logic
         if self.x_t is None:
             # Set X_0 to value determined by config
-            self.x_t = self.x_0()
+            self.x_t = self.c_sto()
 
             # Always save so database updates user values
             self.save()
-            return self.x_t
 
         # Not first tick so follow forula specification
-        if not self.group_play():
+        elif not self.group_play():
             self.x_t = ( (self.a_sto() * self.x_t) + self.generate_noise())
 
             # b offset value
@@ -214,10 +225,12 @@ class Group(DecisionGroup):
         for player in self.get_players():
             playerCode = player.participant.code
             p_code = self.group_decisions[playerCode]
-            if p_code == 1 or p_code == 0:
-                total += self.game_constant()
-            else:
-                total += p_code[1]
+            total += p_code
+            # print(p_code)
+            # if p_code == 1 or p_code == 0:
+            #     total += self.c_sto()
+            # else:
+            #     total += p_code[1]
 
         return total/len(self.get_players())
 
@@ -245,9 +258,9 @@ class Player(BasePlayer):
         if not pay:
             return
         if forecast > -1:
-            error = abs(forecast - pay)
+            error = max(abs(forecast - pay), 0.0001)
             if self.group.group_play():
-                converted_pay = max(0, self.group.P_sto() - self.group.R_sto() * (error ** 2))
+                converted_pay = self.group.P_sto() / (self.group.R_sto() * (error ** 2))
             else:
                 converted_pay = self.group.P_sto() * max(0, 1 - error/self.group.s_sto())
             self.error_pay = converted_pay

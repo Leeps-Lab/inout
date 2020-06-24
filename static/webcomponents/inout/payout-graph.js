@@ -70,12 +70,13 @@ export class PayoutGraph extends PolymerElement {
 			},
 			{
 				type: 'line',
-				name: "Stochastic Payout",
+				name: "Actual",
 				data: [],
 			},
 			{
 				type: 'line',
 				name: "Forecast",
+				showInLegend: false,
 				data: this.initSeries,
 				color: '#FF0000',
 				marker: {symbol: "diamond"}
