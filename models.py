@@ -111,8 +111,6 @@ class Group(DecisionGroup):
     def when_all_players_ready(self):
         super().when_all_players_ready()
 
-        print("when")
-
         # Needed for first tick logic
         self.x_t = None
 
@@ -131,7 +129,6 @@ class Group(DecisionGroup):
 
         # For a randomly generated initial uncommment the generate below and the comment the other generate
         self.generate_x_t()
-        print("tick")
 
         # Message to channel, Include x_t value for treatment
         msg = {}
@@ -183,8 +180,10 @@ class Group(DecisionGroup):
 
     # Random value generator using formula in spec
     def generate_x_t(self):
+        self.refresh_from_db()
         # First tick logic
         if self.x_t is None:
+            print(self.x_t)
             # Set X_0 to value determined by config
             self.x_t = self.c_sto()
 
@@ -231,6 +230,8 @@ class Group(DecisionGroup):
             #     total += self.c_sto()
             # else:
             #     total += p_code[1]
+
+        print(total)
 
         return total/len(self.get_players())
 
