@@ -1,2 +1,2 @@
 initial_decision,group_play,tick_length,period_length,a_sto,s_sto,x_0,b_sto,P_sto,R_sto,c_sto,steps_ahead,show_button
-180,TRUE,0.1,90,0.95,0.00001,0,160,30,0.1,66,2,FALSE
+180,TRUE,1,90,0.95,0.00001,0,160,30,0.1,66,2,FALSE
