@@ -11,10 +11,8 @@ class Decision(Page):
 
     def vars_for_template(self):
         return {
-            "gameConstant": self.group.game_constant(), # Game constant to be determined by config file
-            "treatment": self.group.treatment(),        # Treatment to be decided by config file 
         }
-    
+
 
 class ResultsWaitPage(WaitPage):
 
@@ -23,7 +21,7 @@ class ResultsWaitPage(WaitPage):
 
 
 class Results(Page):
-    
+
     def is_displayed(self):
         return self.round_number <= self.group.num_rounds()
 

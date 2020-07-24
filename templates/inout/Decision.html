@@ -14,19 +14,17 @@
     {% comment %} INOUT polymer {% endcomment %}
     <in-out
         c='{{ player.group.c_sto }}'
-        my-forecast='{{ player.group.c_sto }}'
-        my-curr-forecast='{{ gameConstant }}'
-        treatment='{{ treatment }}'
+        a='{{ player.group.a_sto }}'
+        s='{{ player.group.s_sto }}'
+        x-t='{{ player.group.c_sto }}'
+        my-forecast='{{ player.group.initial_decision }}'
+        my-curr-forecast='{{ player.group.initial_decision }}'
+        initial-decision='{{ player.group.initial_decision }}'
         graph-length='{{ player.group.graph_length }}'
         period-length='{{ player.group.period_length }}'
         steps-ahead='{{ player.group.steps_ahead }}'
         interval='{{ player.group.tick_length }}'
-        {% if player.group.show_button %}
-            show-button
-            graph-line='-1'
-        {% else %}
-            graph-line='{{ gameConstant }}'
-        {% endif %}
+        graph-line='{{ player.group.c_sto }}'
         >
     </in-out>
 

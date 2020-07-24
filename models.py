@@ -28,7 +28,7 @@ def parse_config(config):
         configs.append({
             'period_length': float(row['period_length']),
             'tick_length': float(row['tick_length']),
-            'game_constant': float(row['game_constant']),
+            'initial_decision': float(row['initial_decision']),
             'a_sto': float(row['a_sto']),
             'b_sto': float(row['b_sto']),
             's_sto': float(row['s_sto']),
@@ -36,7 +36,6 @@ def parse_config(config):
             'R_sto': float(row['R_sto']),
             'c_sto': float(row['c_sto']),
             'x_0': float(row['x_0']),
-            'treatment': row['treatment'],
             'steps_ahead': int(row['steps_ahead']),
             'group_play': True if row['group_play'] == 'TRUE' else False,
             'show_button': True if row['show_button'] == 'TRUE' else False,
@@ -71,8 +70,8 @@ class Group(DecisionGroup):
     def tick_length(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["tick_length"]
 
-    def game_constant(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["game_constant"]
+    def initial_decision(self):
+        return parse_config(self.session.config['config_file'])[self.round_number-1]["initial_decision"]
 
     def a_sto(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["a_sto"]
@@ -94,9 +93,6 @@ class Group(DecisionGroup):
 
     def R_sto(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["R_sto"]
-
-    def treatment(self):
-        return parse_config(self.session.config['config_file'])[self.round_number-1]["treatment"]
 
     def show_button(self):
         return parse_config(self.session.config['config_file'])[self.round_number-1]["show_button"]
@@ -128,54 +124,16 @@ class Group(DecisionGroup):
         self.refresh_from_db()
 
         # For a randomly generated initial uncommment the generate below and the comment the other generate
-        self.generate_x_t()
+        # self.generate_x_t()
 
         # Message to channel, Include x_t value for treatment
-        msg = {}
-
-        for player in self.get_players():
-            playerCode = player.participant.code
-            p_code = self.group_decisions[playerCode]
-            player.update_payoff(self.x_t, p_code)
-            msg[playerCode] = {
-                'interval': current_interval * self.tick_length(),
-                #'value': self.x_t,
-                'value': player.get_error_pay(),
-                'payoff': player.get_payoff(),
-                'x_t': self.x_t,
-                'decision': 1
-            }
-            # if p_code is 1 or p_code is 0:
-            #     p_code = [p_code, self.game_constant()]
-            # # print("player code: " + playerCode)
-            # # print(p_code)
-            # if p_code[0] is 1:
-            #     # player is in, send stochastic value
-            #     player.update_payoff(self.x_t, p_code[1])
-            #     msg[playerCode] = {
-            #         'interval': current_interval * self.tick_length(),
-            #         #'value': self.x_t,
-            #         'value': player.get_error_pay(),
-            #         'payoff': player.get_payoff(),
-            #         'x_t': self.x_t,
-            #         'decision': 1
-            #     }
-            # elif p_code[0] is 0:
-            #     # player is out, send constant C
-            #     player.update_payoff(self.game_constant(), -1)
-            #     msg[playerCode] = {
-            #         'interval': current_interval * self.tick_length(),
-            #         'value': self.game_constant(),
-            #         'payoff': player.get_payoff(),
-            #         'x_t': self.x_t,
-            #         'decision': 0
-            #     }
-            # else:
-            #     print("ERROR IN TICK PROCESSING!")
+        msg = {
+            'interval': current_interval * self.tick_length(),
+            'noise': self.generate_noise(),
+        }
 
         # Send message across channel
         self.send('tick', msg)
-
 
 
     # Random value generator using formula in spec
@@ -216,24 +174,24 @@ class Group(DecisionGroup):
         # Multiply by s value (Determined by config)
         return (self.s_sto() * e_t)
 
-    def forecast_ave(self):
-        self.refresh_from_db()
-
-        total = 0
-
-        for player in self.get_players():
-            playerCode = player.participant.code
-            p_code = self.group_decisions[playerCode]
-            total += p_code
-            # print(p_code)
-            # if p_code == 1 or p_code == 0:
-            #     total += self.c_sto()
-            # else:
-            #     total += p_code[1]
-
-        print(total)
-
-        return total/len(self.get_players())
+    # def forecast_ave(self):
+    #     self.refresh_from_db()
+    #
+    #     total = 0
+    #
+    #     for player in self.get_players():
+    #         playerCode = player.participant.code
+    #         p_code = self.group_decisions[playerCode]
+    #         total += p_code
+    #         # print(p_code)
+    #         # if p_code == 1 or p_code == 0:
+    #         #     total += self.c_sto()
+    #         # else:
+    #         #     total += p_code[1]
+    #
+    #     print(total)
+    #
+    #     return total/len(self.get_players())
 
 
 

@@ -23,9 +23,6 @@ export class PayoutGraph extends PolymerElement {
 			treatment: {
 				type: String,
 			},
-			gameConstant:{
-				type: Number,
-			},
 			initialValue:{
 				type: Number,
 			},
@@ -108,18 +105,7 @@ export class PayoutGraph extends PolymerElement {
 					text: 'Value'
 				},
 
-				plotLines: [{
-					color: "#000000",
-					width: 1,
-					value: this.gameConstant,
-					label: {
-						text: (this.gameConstant + " - Q payout"),
-						align: "right",
-						style: {
-							fontSize: 10,
-						}
-					}
-				},
+				plotLines: [
 				{
 					color: "#000000",
 					width: 0.5,
@@ -161,7 +147,7 @@ export class PayoutGraph extends PolymerElement {
 		this.graph_obj.series[2].addPoint(dataArr);
 	}
 	updateForecastLine(data) {
-		this.graph_obj.yAxis[0].plotLinesAndBands[1].options.value = data;
+		this.graph_obj.yAxis[0].plotLinesAndBands[0].options.value = data;
 		this.graph_obj.yAxis[0].update();
 	}
 }
