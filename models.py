@@ -55,6 +55,7 @@ class Subsession(BaseSubsession):
 
 
 class Group(DecisionGroup):
+    tick_num = models.IntegerField(initial=0)
     interval = models.IntegerField(initial=0)
     x_t = models.FloatField(initial=0)
 
@@ -139,7 +140,7 @@ class Group(DecisionGroup):
             player.update_payoff(self.x_t, p_code)
             msg[playerCode] = {
                 'interval': current_interval * self.tick_length(),
-                #'value': self.x_t,
+                'value': self.x_t,
                 'value': player.get_error_pay(),
                 'payoff': player.get_payoff(),
                 'x_t': self.x_t,
@@ -203,6 +204,7 @@ class Group(DecisionGroup):
         # self.x_t = round(self.x_t, 2)
 
         # Always save so database updates user values
+        self.tick_num += 1
         self.save()
         return self.x_t
 
@@ -217,23 +219,30 @@ class Group(DecisionGroup):
         return (self.s_sto() * e_t)
 
     def forecast_ave(self):
+        if self.tick_num < self.steps_ahead():
+            return self.c_sto()
+
         self.refresh_from_db()
 
         total = 0
+        valid = 0
 
         for player in self.get_players():
             playerCode = player.participant.code
             p_code = self.group_decisions[playerCode]
-            total += p_code
-            # print(p_code)
+            if p_code >= 5:
+                total += p_code
+                valid += 1
+                print(p_code)
             # if p_code == 1 or p_code == 0:
             #     total += self.c_sto()
             # else:
             #     total += p_code[1]
 
-        print(total)
+        if valid < 1:
+            return self.c_sto()
 
-        return total/len(self.get_players())
+        return total/valid
 
 
 
@@ -261,7 +270,7 @@ class Player(BasePlayer):
         if forecast > -1:
             error = max(abs(forecast - pay), 0.0001)
             if self.group.group_play():
-                converted_pay = self.group.P_sto() / (self.group.R_sto() * (error ** 2))
+                converted_pay = self.group.P_sto() / (self.group.R_sto() + error)
             else:
                 converted_pay = self.group.P_sto() * max(0, 1 - error/self.group.s_sto())
             self.error_pay = converted_pay

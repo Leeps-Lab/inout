@@ -97,7 +97,7 @@ export class InOut extends PolymerElement {
 						type="range"
 						min='0'
 						max='300'
-						value='{{c}}'
+						value='{{gameConstant}}'
 						step="0.01"
 						on-change="_sliderValueChanged">
 				</div>
@@ -204,10 +204,11 @@ export class InOut extends PolymerElement {
 		super.ready();
 		console.log("in-out.html");
 		this.payoff_graph = this.shadowRoot.querySelector('payout-graph');
+		this.myCurrForecast = this.graphLine;
 		if(!this.showButton) {
 			this.graphLine = -1;
 		}
-		for(let i = 0; i < this.stepsAhead; i++) {
+		for(let i = 0; i < this.stepsAhead - 1; i++) {
 			this.forecastQueue.push(-1);
 		}
 	}
@@ -299,7 +300,7 @@ export class InOut extends PolymerElement {
 	_sliderValueChanged(event) {
 		this.myCurrForecast = parseFloat(event.target.value);
 		//this.myForecast = parseFloat(event.target.value);
-		this.forecastQueue.push(parseFloat(event.target.value));
+		// this.forecastQueue.push(parseFloat(event.target.value));
 		this.payoff_graph.updateForecastLine(event.target.value);
 	}
 	getMyDecisions(isIn, myForecast) {
