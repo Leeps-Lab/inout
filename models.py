@@ -140,39 +140,11 @@ class Group(DecisionGroup):
             player.update_payoff(self.x_t, p_code)
             msg[playerCode] = {
                 'interval': current_interval * self.tick_length(),
-                'value': self.x_t,
                 'value': player.get_error_pay(),
                 'payoff': player.get_payoff(),
                 'x_t': self.x_t,
                 'decision': 1
             }
-            # if p_code is 1 or p_code is 0:
-            #     p_code = [p_code, self.game_constant()]
-            # # print("player code: " + playerCode)
-            # # print(p_code)
-            # if p_code[0] is 1:
-            #     # player is in, send stochastic value
-            #     player.update_payoff(self.x_t, p_code[1])
-            #     msg[playerCode] = {
-            #         'interval': current_interval * self.tick_length(),
-            #         #'value': self.x_t,
-            #         'value': player.get_error_pay(),
-            #         'payoff': player.get_payoff(),
-            #         'x_t': self.x_t,
-            #         'decision': 1
-            #     }
-            # elif p_code[0] is 0:
-            #     # player is out, send constant C
-            #     player.update_payoff(self.game_constant(), -1)
-            #     msg[playerCode] = {
-            #         'interval': current_interval * self.tick_length(),
-            #         'value': self.game_constant(),
-            #         'payoff': player.get_payoff(),
-            #         'x_t': self.x_t,
-            #         'decision': 0
-            #     }
-            # else:
-            #     print("ERROR IN TICK PROCESSING!")
 
         # Send message across channel
         self.send('tick', msg)

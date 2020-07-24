@@ -14,6 +14,7 @@
     {% comment %} INOUT polymer {% endcomment %}
     <in-out
         c='{{ player.group.c_sto }}'
+        initial-decision='{{ player.group.game_constant }}'
         my-forecast='{{ gameConstant }}'
         my-curr-forecast='{{ gameConstant }}'
         treatment='{{ treatment }}'
@@ -21,12 +22,7 @@
         period-length='{{ player.group.period_length }}'
         steps-ahead='{{ player.group.steps_ahead }}'
         interval='{{ player.group.tick_length }}'
-        {% if player.group.show_button %}
-            show-button
-            graph-line='-1'
-        {% else %}
-            graph-line='{{ gameConstant }}'
-        {% endif %}
+        graph-line='{{ gameConstant }}'
         >
     </in-out>
 

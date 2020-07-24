@@ -54,7 +54,6 @@ export class InOut extends PolymerElement {
 				}
 
 			</style>
-
 			<redwood-period>
 			</redwood-period>
 			<redwood-decision
@@ -97,7 +96,7 @@ export class InOut extends PolymerElement {
 						type="range"
 						min='0'
 						max='300'
-						value='{{gameConstant}}'
+						value='{{ initialDecision }}'
 						step="0.01"
 						on-change="_sliderValueChanged">
 				</div>
@@ -142,10 +141,8 @@ export class InOut extends PolymerElement {
 				type: Number,
 				value: 0,
 			},
-			myDecisions: {
-				type: Object,
-				value: [1, self.c],
-				computed: 'getMyDecisions(isIn, myForecast)',
+			initialDecision: {
+				type: Number,
 			},
 			groupDecisions: {
 				type: Object,
@@ -302,9 +299,6 @@ export class InOut extends PolymerElement {
 		//this.myForecast = parseFloat(event.target.value);
 		// this.forecastQueue.push(parseFloat(event.target.value));
 		this.payoff_graph.updateForecastLine(event.target.value);
-	}
-	getMyDecisions(isIn, myForecast) {
-		return [this.isIn, this.myForecast];
 	}
 }
 
